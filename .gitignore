@@ -1,0 +1,40 @@
+# Archivos de configuración sensibles
+oauth2-proxy.cfg
+.env
+
+# Claves y certificados
+*.pem
+*.key
+*.crt
+
+# Archivos de Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.sqlite3
+
+# Entornos virtuales
+venv/
+env/
+virtualenv/
+
+# Logs y archivos temporales
+*.log
+*.tmp
+*.swp
+
+# Configuraciones locales
+/.idea
+/.vscode
+/.DS_Store
+
+# Carpetas generadas por Docker
+/volumes
+
+# Archivos de Airflow
+/airflow/__pycache__
+
+# Panel cache
+.panel-server

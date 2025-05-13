@@ -1,0 +1,38 @@
+# version: '3.8'
+
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    container_name: keycloak
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      DB_VENDOR: h2
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./volumes/keycloak:/opt/jboss/keycloak/standalone/data
+    command:
+      - start-dev
+
+  # fastapi-auth:
+  #   build: .
+  #   container_name: fastapi-auth
+  #   ports:
+  #     - "8000:8000"
+  #   volumes:
+  #     - ./volumes/fastapi:/app
+  #   working_dir: /app
+  #   command: ["uvicorn", "auth/fastapi-auth:app", "--host", "0.0.0.0", "--port", "8000"]
+  #   depends_on:
+  #     - keycloak
+
+  oauth2-proxy:
+    image: quay.io/oauth2-proxy/oauth2-proxy:v7.6.0
+    container_name: oauth2-proxy
+    ports:
+      - "4180:4180"
+    volumes:
+      - ./volumes/oauth2-proxy:/etc/oauth2-proxy
+    command:
+      - --config=/etc/oauth2-proxy/oauth2-proxy.cfg
