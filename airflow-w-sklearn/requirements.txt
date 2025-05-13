@@ -1,0 +1,12 @@
+scikit-learn
+pandas
+joblib
+apache-airflow-providers-http
+apache-airflow-providers-postgres
+pandas
+requests
+apache-airflow-providers-http
+apache-airflow-providers-postgres
+matplotlib
+seaborn
+numpy

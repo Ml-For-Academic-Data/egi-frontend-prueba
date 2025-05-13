@@ -1,38 +1,63 @@
-# version: '3.8'
+version: '3.8'
 
 services:
-  keycloak:
-    image: quay.io/keycloak/keycloak:latest
-    container_name: keycloak
+  airflow:
+    build:
+      context: ./airflow-w-sklearn    # <-- Aquí apunta al Dockerfile de la carpeta dedicada
+    # image: apache/airflow:2.9.2
+    image: airflow-w-sklearn
+    container_name: airflow
     environment:
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin
-      DB_VENDOR: h2
+      - AIRFLOW__CORE__EXECUTOR=SequentialExecutor #No apto para producción
+      - AIRFLOW__CORE__LOAD_EXAMPLES=false
+      - AIRFLOW__CORE__FERNET__KEY=D_b7-k2tJcEmrfAPASL8V_cY03LJd-uWWtJ-8HN1Esk=
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=sqlite:////opt/airflow/airflow.db
+
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./src:/opt/airflow/src
+      - ./volumes/airflow:/opt/airflow
     ports:
       - "8080:8080"
+    # command: standalone
+    command: >
+      bash -c "airflow db init &&
+                airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@example.com &&
+                airflow webserver"
+
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:22.0.5
+    container_name: keycloak
+    environment:
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+      - DB_VENDOR=h2
     volumes:
-      - ./volumes/keycloak:/opt/jboss/keycloak/standalone/data
+      - ./volumes/keycloak:/opt/keycloak/data
+    ports:
+      - "8081:8080"
     command:
       - start-dev
 
-  # fastapi-auth:
-  #   build: .
-  #   container_name: fastapi-auth
-  #   ports:
-  #     - "8000:8000"
-  #   volumes:
-  #     - ./volumes/fastapi:/app
-  #   working_dir: /app
-  #   command: ["uvicorn", "auth/fastapi-auth:app", "--host", "0.0.0.0", "--port", "8000"]
-  #   depends_on:
-  #     - keycloak
-
   oauth2-proxy:
-    image: quay.io/oauth2-proxy/oauth2-proxy:v7.6.0
+    image: bitnami/oauth2-proxy:latest
     container_name: oauth2-proxy
+    environment:
+      - OAUTH2_PROXY_CLIENT_ID=your-client-id
+      - OAUTH2_PROXY_CLIENT_SECRET=your-client-secret
+      - OAUTH2_PROXY_COOKIE_SECRET=Zm9vYmFyMTIzYWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTI=
+      - OAUTH2_PROXY_PROVIDER_OIDC_ISSUER_URL=http://localhost:8081/realms/your-realm
+      - OAUTH2_PROXY_EMAIL_DOMAINS=*
+      - OAUTH2_PROXY_HTTP_ADDRESS=0.0.0.0:4180
+      - OAUTH2_PROXY_UPSTREAM=http://host.docker.internal:5006
     ports:
       - "4180:4180"
-    volumes:
-      - ./volumes/oauth2-proxy:/etc/oauth2-proxy
-    command:
-      - --config=/etc/oauth2-proxy/oauth2-proxy.cfg
+
+  # airflow-init:
+  #   image: apache/airflow:2.9.2
+  #   command: /bin/bash -c "pip install --no-cache-dir -r /requirements.txt"
+  #   volumes:
+  #     - .:/requirements.txt:/requirements.txt
+  #   environment:
+  #     - AIRFLOW__CORE__LOAD_EXAMPLES=false
