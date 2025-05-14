@@ -2,7 +2,10 @@ Desarrollar un sistema automatizado que procese datos académicos, identifique g
 
 
 
-Estando en la carpeta raiz del proyecto
+#IGNORAR# No hay código seleccionado para mejorar, pero se puede agregar un ejemplo de cómo podría estructurarse el sistema automatizado que procesa datos académicos y aplica algoritmos de ML para identificar grupos de riesgo de deserción y asignar becas.
+
+
+Estando en la carpeta raiz del proyecto y habiendo iniciado Docker Desktop
 Para construir la imagen por primera vez:
 `docker compose up --build`
 
@@ -17,6 +20,11 @@ Para detener el contenedor sin borrar redes, contenedores o volumenes (continuar
 
 Para limpiar entorno por completo (como si nunca se hubiera corrido el proyecto):
 `docker compose down`
+
+Para entrar a los endpoints, en cada contenedor de Docker Desktop debajo del nombre está el puerto disponible (click y redirige)
+
+
+####IGNORAR
 ❗Puedes usar docker compose down para "limpiar recursos", y no pierdes datos si usaste bind mounts (carpetas locales) como ./keycloak-data, ./data, o ./models. 
 ⚠️ Si usaste named volumes (definidos dentro del docker-compose.yml), esos no se borran a menos que uses -v . 
 
