@@ -12,6 +12,10 @@ services:
       - AIRFLOW__CORE__LOAD_EXAMPLES=false
       - AIRFLOW__CORE__FERNET__KEY=D_b7-k2tJcEmrfAPASL8V_cY03LJd-uWWtJ-8HN1Esk=
       - AIRFLOW__CORE__SQL_ALCHEMY_CONN=sqlite:////opt/airflow/airflow.db
+      # usuario por defecto
+      - _AIRFLOW_WWW_USER_CREATE=true
+      - _AIRFLOW_WWW_USER_USERNAME=admin
+      - _AIRFLOW_WWW_USER_PASSWORD=admin
 
     volumes:
       - ./dags:/opt/airflow/dags
@@ -24,6 +28,22 @@ services:
       bash -c "airflow db init &&
                 airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@example.com &&
                 airflow webserver"
+
+
+  airflow-scheduler:
+    build:
+      context: ./airflow-w-sklearn    # <-- Aquí apunta al Dockerfile de la carpeta dedicada
+    image: airflow-w-sklearn
+    container_name: airflow-scheduler
+    command: airflow scheduler
+    depends_on:
+      - airflow
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./src:/opt/airflow/src
+      - ./volumes/airflow:/opt/airflow
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=SequentialExecutor
 
 
   keycloak:

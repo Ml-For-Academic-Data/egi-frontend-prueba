@@ -7,7 +7,7 @@ import os
 
 def train_model():
     print("Entrenando modelo...")
-    df = pd.read_csv("../processed/cleaned_data.csv")
+    df = pd.read_csv("./processed/cleaned_data.csv")
 
     X = df.drop(columns=["desercion"])
     y = df["desercion"]
@@ -21,8 +21,8 @@ def train_model():
     acc = accuracy_score(y_test, preds)
     print(f"Model Accuracy: {acc:.2f}")
 
-    os.makedirs("../models", exist_ok=True)
-    joblib.dump(model, "../models/dropout_model.pkl")
+    os.makedirs("./models", exist_ok=True)
+    joblib.dump(model, "./models/dropout_model.pkl")
     print("Modelo guardado.")
 
 if __name__ == "__main__":

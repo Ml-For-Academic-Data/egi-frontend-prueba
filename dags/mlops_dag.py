@@ -1,9 +1,9 @@
 from datetime import datetime
 from airflow import DAG
 from airflow.operators.python import PythonOperator
+
 import sys
 import os
-
 sys.path.append(os.path.abspath("/opt/airflow/src"))
 
 from etl import run_etl
