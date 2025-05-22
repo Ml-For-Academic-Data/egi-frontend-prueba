@@ -36,9 +36,9 @@ def run_etl():
     # --- Fin de codificación ---
 
     # Guardar datos procesados
-    os.makedirs("./processed", exist_ok=True)
-    df.to_csv("./processed/cleaned_data.csv", index=False)
-    print("ETL completado. Datos guardados en ./processed/cleaned_data.csv")
+    os.makedirs("./data/processed", exist_ok=True)
+    df.to_csv("./data/processed/cleaned_data.csv", index=False)
+    print("ETL completado. Datos guardados en ./data/processed/cleaned_data.csv")
     return df
 
 if __name__ == "__main__":

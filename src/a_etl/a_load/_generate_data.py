@@ -1,3 +1,5 @@
+# Genera datos ficticios (si no hay fuente real)
+
 # import pandas as pd
 # import numpy as np
 

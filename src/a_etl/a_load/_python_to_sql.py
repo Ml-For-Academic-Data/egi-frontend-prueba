@@ -1,5 +1,10 @@
+# Guarda datos limpios en DB
 import pandas as pd
 from sqlalchemy import create_engine
+
+'''
+En lugar de usar un usuario personalizado como 'user'@'localhost', usa uno que ya esté creado, como 'root'@'localhost'.
+'''
 
 # Datos de conexión
 usuario = "user"
@@ -11,7 +16,7 @@ base_datos = "students"
 tabla = "students"
 
 # Ruta al archivo CSV
-archivo_csv = ".\dataset.csv"
+archivo_csv = ".\data\dataset.csv"
 
 # Crear motor de conexión
 cadena_conexion = f"mysql+pymysql://{usuario}:{contrasena}@{host}:{puerto}/{base_datos}"

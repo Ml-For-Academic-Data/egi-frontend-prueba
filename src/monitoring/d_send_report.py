@@ -1,0 +1,1 @@
+# Envía resumen por email o Slack

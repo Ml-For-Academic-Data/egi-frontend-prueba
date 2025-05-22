@@ -1,8 +1,14 @@
 version: '3.8'
 
+
+networks:
+  internal_network:
+    driver: bridge
+
 services:
   airflow:
-  # En caso de falta de contraseña (ver al iniciar sesión en la pagina autohosteada) abrir terminal de contenedor airflow, abrir archivo config (ya voy a actualizar los comandos necesarios) y buscar "password"
+  # En caso de falta de contraseña (ver al iniciar sesión en la pagina autohosteada) abrir terminal de contenedor airflow, abrir archivo config y buscar "password": docker ps, docker exec -it <nombre_del_contenedor> bash, /opt/airflow/airflow.cfg, cat /opt/airflow/airflow.cfg
+
     build:
       context: ./airflow-w-sklearn    # <-- Aquí apunta al Dockerfile de la carpeta dedicada
     # image: apache/airflow:2.9.2
@@ -17,6 +23,8 @@ services:
       - _AIRFLOW_WWW_USER_CREATE=true
       - _AIRFLOW_WWW_USER_USERNAME=admin
       - _AIRFLOW_WWW_USER_PASSWORD=admin
+      # # para que todas las carpetas de src/ sean importables
+      # - PYTHONPATH=/opt/airflow/src
 
     volumes:
       - ./dags:/opt/airflow/dags
@@ -61,6 +69,7 @@ services:
     command:
       - start-dev
 
+
   oauth2-proxy:
     image: bitnami/oauth2-proxy:latest
     container_name: oauth2-proxy
@@ -84,11 +93,31 @@ services:
   #     - AIRFLOW__CORE__LOAD_EXAMPLES=false
 
     # docker-compose.yml
-  mysql:
+
+  mysql-server:
     image: mysql:8.0
+    container_name: mysql-server
     environment:
       MYSQL_ROOT_PASSWORD: rootpass
-    volumes:
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      MYSQL_DATABASE: students
+      MYSQL_USER: user
+      MYSQL_PASSWORD: 1234
     ports:
-      - "3306:3306"
+      - "3306:3306" # Opcional: solo si necesitas acceder desde fuera del contenedor
+    volumes:
+      - .volumes/mysql_data:/var/lib/mysql
+      - .volumes/mysql_data/init.sql:/docker-entrypoint-initdb.d/init.sql  # script inicial (opcional)
+    networks:
+      - internal_network
+
+  # etl-app:
+  #   image: python:3.10-slim
+  #   container_name: etl-app
+  #   working_dir: /app
+  #   volumes:
+  #     - .:/app
+  #   depends_on:
+  #     - mysql-server
+  #   networks:
+  #     - internal_network
+  #   command: tail -f /dev/null  # Mantiene el contenedor corriendo para pruebas

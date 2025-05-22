@@ -1,0 +1,1 @@
+# Carga configuraciones dinámicas
