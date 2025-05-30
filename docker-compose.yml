@@ -113,14 +113,12 @@ services:
     networks:
       - internal_network
 
-  # etl-app:
-  #   image: python:3.10-slim
-  #   container_name: etl-app
-  #   working_dir: /app
-  #   volumes:
-  #     - .:/app
-  #   depends_on:
-  #     - mysql-server
-  #   networks:
-  #     - internal_network
-  #   command: tail -f /dev/null  # Mantiene el contenedor corriendo para pruebas
+  panel-app:
+    build:
+      context: ./visualization
+    container_name: panel-app
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./data:/opt/airflow/data  # Compartimos los datos con la app
+      - ./visualization:/app  # Compartimos la app con el contenedor
