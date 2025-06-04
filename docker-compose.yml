@@ -73,19 +73,21 @@ services:
       - start-dev
 
 
-  oauth2-proxy:
-    image: bitnami/oauth2-proxy:latest
-    container_name: oauth2-proxy
-    environment:
-      - OAUTH2_PROXY_CLIENT_ID=your-client-id
-      - OAUTH2_PROXY_CLIENT_SECRET=your-client-secret
-      - OAUTH2_PROXY_COOKIE_SECRET=Zm9vYmFyMTIzYWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTI=
-      - OAUTH2_PROXY_PROVIDER_OIDC_ISSUER_URL=http://localhost:8081/realms/your-realm
-      - OAUTH2_PROXY_EMAIL_DOMAINS=*
-      - OAUTH2_PROXY_HTTP_ADDRESS=0.0.0.0:4180
-      - OAUTH2_PROXY_UPSTREAM=http://host.docker.internal:5006
-    ports:
-      - "4180:4180"
+  #oauth2-proxy:
+    #image: bitnami/oauth2-proxy:latest
+    #container_name: oauth2-proxy
+    #environment:
+      #- OAUTH2_PROXY_CLIENT_ID=frontend-client
+     # - OAUTH2_PROXY_CLIENT_SECRET=ZUA1nSULKbOUVSczgFnlN4kKwK7m9YaV
+     # - OAUTH2_PROXY_COOKIE_SECRET=Zm9vYmFyMTIzYWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTI=
+     # - OAUTH2_PROXY_PROVIDER=oidc
+     # - OAUTH2_PROXY_OIDC_ISSUER_URL=http://keycloak:8080/realms/ML
+     # - OAUTH2_PROXY_EMAIL_DOMAINS=*
+     # - OAUTH2_PROXY_HTTP_ADDRESS=0.0.0.0:4180
+     # - OAUTH2_PROXY_UPSTREAM=http://frontend:3000
+    #  - OAUTH2_PROXY_REDIRECT_URL=http://localhost:4180/oauth2/callback
+    #ports:
+    #  - "4180:4180"
 
   # airflow-init:
   #   image: apache/airflow:2.9.2
@@ -122,3 +124,18 @@ services:
     volumes:
       - ./data:/opt/airflow/data  # Compartimos los datos con la app
       - ./visualization:/app  # Compartimos la app con el contenedor
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: frontend-app
+    ports:
+      - "3000:3000"
+    networks:
+      - internal_network
+    environment:
+    - FLASK_ENV=development
+    volumes:
+    - ./frontend:/app
+    depends_on:
+      - keycloak
