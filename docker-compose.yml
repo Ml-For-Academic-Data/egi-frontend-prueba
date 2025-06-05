@@ -67,10 +67,12 @@ services:
       - DB_VENDOR=h2
     volumes:
       - ./volumes/keycloak:/opt/keycloak/data
+      - ./keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json:ro
     ports:
       - "8081:8080"
     command:
       - start-dev
+      - --import-realm
 
 
   #oauth2-proxy:
