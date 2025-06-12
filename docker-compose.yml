@@ -9,10 +9,11 @@ services:
   airflow:
   # En caso de falta de contraseña (ver al iniciar sesión en la pagina autohosteada) abrir terminal de contenedor airflow, abrir archivo config y buscar "password": docker ps, docker exec -it <nombre_del_contenedor> bash, /opt/airflow/airflow.cfg, cat /opt/airflow/airflow.cfg
   
-    build:
-      context: ./airflow-w-sklearn    # <-- Aquí apunta al Dockerfile de la carpeta dedicada
+    # build:
+    #   context: ./airflow-w-sklearn    # <-- Aquí apunta al Dockerfile de la carpeta dedicada
     # image: apache/airflow:2.9.2
-    image: airflow-w-sklearn
+    image: matiascollado/airflow-w-sklearn:v1.0
+    # image: airflow-w-sklearn
     container_name: airflow
     environment:
       - AIRFLOW__CORE__EXECUTOR=SequentialExecutor #No apto para producción
@@ -42,9 +43,10 @@ services:
 
 
   airflow-scheduler:
-    build:
-      context: ./airflow-w-sklearn    # <-- Aquí apunta al Dockerfile de la carpeta dedicada
-    image: airflow-w-sklearn
+    # build:
+    #   context: ./airflow-w-sklearn    # <-- Aquí apunta al Dockerfile de la carpeta dedicada
+    image: matiascollado/airflow-w-sklearn:v1.0
+    # image: airflow-w-sklearn
     container_name: airflow-scheduler
     command: airflow scheduler
     depends_on:
