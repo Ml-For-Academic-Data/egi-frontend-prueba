@@ -15,7 +15,7 @@ services:
     ports:
       - "5000:5000"
     volumes:
-      - ../control/data:/opt/airflow/data  # Compartimos los datos con la app
+      - ../egi-control/data:/opt/airflow/data  # Compartimos los datos con la app
       - ./visualization:/app  # Compartimos la app con el contenedor
 
   # frontend:
