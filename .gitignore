@@ -1,40 +1,116 @@
-# Archivos de configuración sensibles
-oauth2-proxy.cfg
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+#  Usually these files are written by a python script from a template
+#  before PyInstaller builds the exe, so as to inject date/other infos into it.
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# Translations
+*.mo
+*.pot
+
+# Flask instance folder
+instance/
+
+# Flask cache
+flask_session/
+
+# Pyre type checker
+.pyre/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# VSCode settings
+.vscode/
+
+# PyCharm
+.idea/
+
+# Editor swap files
+*.swp
+*~
+
+# Virtual environments
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# dotenv environment variables file
 .env
 
-# Claves y certificados
-*.pem
-*.key
-*.crt
+# Docker local config files
+docker-compose.override.yml
+.dockerignore
 
-# Archivos de Python
-__pycache__
-*.pyc
-*.pyo
-*.pyd
-*.db
-*.sqlite3
-
-# Entornos virtuales
-venv/
-env/
-virtualenv/
-
-# Logs y archivos temporales
+# Logs and databases
 *.log
-*.tmp
-*.swp
+*.sqlite3
+*.db
 
-# Configuraciones locales
-/.idea
-/.vscode
-/.DS_Store
+# Coverage reports
+.coverage
+.coverage.*
+.cache
 
-# Carpetas generadas por Docker
-/volumes
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
 
-# Archivos de Airflow
-/airflow/__pycache__
-
-# Panel cache
-.panel-server
+# macOS files
+.DS_Store
