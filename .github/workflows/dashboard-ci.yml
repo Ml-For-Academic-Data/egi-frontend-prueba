@@ -1,0 +1,80 @@
+name: CI/CD para el Dashboard de Visualización
+
+on:
+  push:
+    # ¡Punto Clave! Solo se activa con cambios en la carpeta 'visualization'.
+    paths:
+      - 'visualization/**'
+    branches:
+      - main
+  pull_request:
+    paths:
+      - 'visualization/**'
+    branches:
+      - main
+
+env:
+  REGISTRY: ghcr.io
+  # Le damos un nombre específico a la imagen del dashboard.
+  IMAGE_NAME: ${{ github.repository_owner }}/egi-dashboard
+
+jobs:
+  # El trabajo de 'test' es similar, pero ahora podrías añadir
+  # pruebas específicas para el dashboard si quisieras.
+  test:
+    name: Pruebas y Calidad de Código
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # ... (Pasos de instalación de Python y dependencias) ...
+
+  # El trabajo de construcción ahora apunta al Dockerfile correcto.
+  build-and-push:
+    name: Construir y Publicar Imagen del Dashboard
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      tags: ${{ steps.meta.outputs.tags }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: type=sha,prefix=,format=short
+      - uses: docker/build-push-action@v5
+        with:
+          # ¡Punto Clave! Apuntamos al contexto y Dockerfile correctos.
+          context: ./visualization
+          file: ./visualization/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+
+  # El trabajo de actualización ahora modifica la configuración del frontend.
+  update-manifest:
+    name: Actualizar Manifiesto del Frontend
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: Ml-For-Academic-Data/egi-infrastructure-k8s
+          token: ${{ secrets.REPO_ACCESS_TOKEN }}
+      - name: Actualizar el tag de la imagen
+        run: |
+          FULL_IMAGE_TAG=${{ needs.build-and-push.outputs.tags }}
+          IMAGE_TAG_ONLY=${FULL_IMAGE_TAG##*:}
+          echo "Actualizando frontend de desarrollo a la etiqueta: ${IMAGE_TAG_ONLY}"
+          # ¡Punto Clave! Modifica el archivo de valores del frontend.
+          sed -i "s|tag:.*|tag: '"${IMAGE_TAG_ONLY}"'|g" charts/frontend/values-desarrollo.yaml
+      - uses: actions/checkout@v4
+        # ... (Paso para hacer commit y push del cambio) ...

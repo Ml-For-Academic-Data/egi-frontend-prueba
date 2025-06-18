@@ -1,0 +1,13 @@
+# visualization/requirements.txt
+
+# Librerías para el dashboarding y la visualización
+panel
+plotly
+matplotlib
+seaborn
+
+# Librería para la manipulación de datos
+pandas
+
+# Servidor de producción para aplicaciones web Python
+gunicorn
