@@ -1,24 +1,24 @@
-# visualizationDockerfile
+# Dockerfile optimizado para el Dashboard de Panel
 
-# Usamos una imagen de Python ligera y oficial.
+# 1. Usamos una imagen de Python ligera y oficial como base.
 FROM python:3.9-slim
 
+# 2. Establecemos el directorio de trabajo dentro del contenedor.
+WORKDIR /app
 
-# Establecemos el directorio de trabajo dentro del contenedor.
-WORKDIR app
-
-# Copiamos solo el archivo de requerimientos primero para aprovechar el caché de Docker.
+# 3. Copiamos solo el archivo de requerimientos primero para aprovechar el caché de Docker.
 COPY requirements.txt .
 
-# Instalamos las dependencias.
+# 4. Instalamos las dependencias de Python definidas en el archivo anterior.
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copiamos el resto del código de la aplicación (el app.py del dashboard).
+# 5. Copiamos el resto del código de la aplicación (app.py) al directorio de trabajo.
 COPY . .
 
-# Exponemos el puerto 5000, que es el puerto por defecto de Panel.
+# 6. Exponemos el puerto 5000, que es donde correrá nuestra aplicación.
 EXPOSE 5000
 
-# El comando para iniciar la aplicación. 'panel serve' es el método recomendado.
-# Le decimos que acepte conexiones desde cualquier dirección en el puerto 5000.
-CMD [panel, serve, app.py, --address, 0.0.0.0, --port, 5000]
+# 7. El comando para iniciar la aplicación. Esta es la línea corregida.
+# Le dice al contenedor que ejecute el servidor de 'panel' para el archivo 'app.py',
+# aceptando conexiones desde cualquier dirección en el puerto 5000.
+CMD panel serve app.py --address 0.0.0.0 --port 5000
