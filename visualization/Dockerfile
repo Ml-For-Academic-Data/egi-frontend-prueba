@@ -1,7 +1,8 @@
 # visualizationDockerfile
 
 # Usamos una imagen de Python ligera y oficial.
-FROM python3.9-slim
+FROM python:3.9-slim
+
 
 # Establecemos el directorio de trabajo dentro del contenedor.
 WORKDIR app
