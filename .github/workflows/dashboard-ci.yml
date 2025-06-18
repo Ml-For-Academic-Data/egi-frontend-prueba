@@ -2,7 +2,6 @@ name: CI/CD para el Dashboard de Visualización
 
 on:
   push:
-    # ¡Punto Clave! Solo se activa con cambios en la carpeta 'visualization'.
     paths:
       - 'visualization/**'
     branches:
@@ -15,12 +14,9 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  # Le damos un nombre específico a la imagen del dashboard.
   IMAGE_NAME: ${{ github.repository_owner }}/egi-dashboard
 
 jobs:
-  # El trabajo de 'test' es similar, pero ahora podrías añadir
-  # pruebas específicas para el dashboard si quisieras.
   test:
     name: Pruebas y Calidad de Código
     runs-on: ubuntu-latest
@@ -28,7 +24,6 @@ jobs:
       - uses: actions/checkout@v4
       # ... (Pasos de instalación de Python y dependencias) ...
 
-  # El trabajo de construcción ahora apunta al Dockerfile correcto.
   build-and-push:
     name: Construir y Publicar Imagen del Dashboard
     needs: test
@@ -41,25 +36,35 @@ jobs:
       tags: ${{ steps.meta.outputs.tags }}
     steps:
       - uses: actions/checkout@v4
-      - uses: docker/login-action@v3
+
+      # --- PASO NUEVO: INICIAR SESIÓN EN DOCKER HUB ---
+      - name: Iniciar sesión en Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # --- Este paso se mantiene: ahora iniciamos sesión en el registry de GitHub ---
+      - name: Iniciar sesión en GitHub Container Registry (GHCR)
+        uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
       - uses: docker/metadata-action@v5
         id: meta
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: type=sha,prefix=,format=short
+      
       - uses: docker/build-push-action@v5
         with:
-          # ¡Punto Clave! Apuntamos al contexto y Dockerfile correctos.
           context: ./visualization
           file: ./visualization/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
 
-  # El trabajo de actualización ahora modifica la configuración del frontend.
   update-manifest:
     name: Actualizar Manifiesto del Frontend
     needs: build-and-push
@@ -74,7 +79,9 @@ jobs:
           FULL_IMAGE_TAG=${{ needs.build-and-push.outputs.tags }}
           IMAGE_TAG_ONLY=${FULL_IMAGE_TAG##*:}
           echo "Actualizando frontend de desarrollo a la etiqueta: ${IMAGE_TAG_ONLY}"
-          # ¡Punto Clave! Modifica el archivo de valores del frontend.
           sed -i "s|tag:.*|tag: '"${IMAGE_TAG_ONLY}"'|g" charts/frontend/values-desarrollo.yaml
-      - uses: actions/checkout@v4
-        # ... (Paso para hacer commit y push del cambio) ...
+      - name: Hacer Commit y Push de los cambios
+        run: |
+            git config --global user.name 'GitHub Actions Bot'
+            git config --global user.email 'github-actions-bot@github.com'
+            git diff --quiet || (git add charts/frontend/values-desarrollo.yaml && git commit -m "ci(frontend): Actualiza imagen de desarrollo a ${{ github.sha }}" && git push)
