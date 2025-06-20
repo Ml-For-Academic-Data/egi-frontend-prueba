@@ -7,7 +7,8 @@ import seaborn as sns
 pn.extension('plotly')
 
 # Cargo el dataset
-df = pd.read_csv('/opt/airflow/data/processed/cleaned_data.csv')
+df = pd.read_csv('/data/processed/cleaned_data.csv')
+
 
 # Columnas categóricas para seleccionar
 categorical_columns = [
