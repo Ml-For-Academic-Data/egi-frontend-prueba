@@ -1,3 +1,5 @@
+# Este pipeline está diseñado para construir dos microservicios (visualization y static-web)
+# desde un solo repositorio y actualizar un manifiesto de Helm en otro repositorio.
 name: CI/CD para Microservicios Frontend
 
 on:
@@ -10,23 +12,21 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  # Definimos nombres de imagen separados
+  # CORRECCIÓN: Nombres de las imágenes en el registry según tu petición.
+  # La carpeta 'visualization' genera la imagen 'egi-dashboard'.
   VISUALIZATION_IMAGE_NAME: ${{ github.repository_owner }}/egi-dashboard
+  # La carpeta 'static-web' genera la imagen 'egi-static-web'.
   STATIC_WEB_IMAGE_NAME: ${{ github.repository_owner }}/egi-static-web
 
 jobs:
-  test:
-    name: Pruebas y Calidad de Código
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      # ... (Pasos de instalación de Python y dependencias) ...
+  # (Opcional) Puedes mantener tu job de 'test' aquí si lo tienes.
+  # test:
+  #   ...
 
-  # Job para construir y publicar la imagen de VISUALIZATION
+  # Job para construir y publicar la imagen de la carpeta 'visualization'
   build-and-push-visualization:
-    name: Construir y Publicar Imagen de Visualization
-    needs: test
-    # Este job solo se ejecuta si hay cambios en la carpeta 'visualization'
+    name: Construir y Publicar Imagen de Visualization (como egi-dashboard)
+    # needs: test # Descomenta si tienes un job de pruebas
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
@@ -49,22 +49,22 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
+          # Usa la variable de entorno para el nombre de la imagen 'egi-dashboard'
           images: ${{ env.REGISTRY }}/${{ env.VISUALIZATION_IMAGE_NAME }}
           tags: type=sha,prefix=,format=short
 
       - name: Construir y publicar la imagen de Visualization
         uses: docker/build-push-action@v5
         with:
-          context: ./visualization
+          context: ./visualization # El contexto es la carpeta de origen
           file: ./visualization/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
 
-  # Job para construir y publicar la imagen del NUEVO SERVICIO (Static Web)
+  # Job para construir y publicar la imagen de la carpeta 'static-web'
   build-and-push-static-web:
     name: Construir y Publicar Imagen de Static Web
-    needs: test
-    # Este job solo se ejecuta si hay cambios en la carpeta 'Static Web'
+    # needs: test # Descomenta si tienes un job de pruebas
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
@@ -87,23 +87,23 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
+          # Usa la variable de entorno para el nombre de la imagen 'egi-static-web'
           images: ${{ env.REGISTRY }}/${{ env.STATIC_WEB_IMAGE_NAME }}
           tags: type=sha,prefix=,format=short
 
       - name: Construir y publicar la imagen de Static Web
         uses: docker/build-push-action@v5
         with:
-          context: ./static-web # Apunta a la carpeta del nuevo servicio
+          context: ./static-web # El contexto es la carpeta de origen
           file: ./static-web/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
 
-  # Job para actualizar el manifiesto, ahora es más inteligente
+  # Job para actualizar el manifiesto de Helm
   update-manifest:
     name: Actualizar Manifiesto en K8s Repo
-    # Se ejecuta si CUALQUIERA de los jobs de construcción fue exitoso
     needs: [build-and-push-visualization, build-and-push-static-web]
-    # 'always()' asegura que se ejecute para verificar si necesita hacer algo
+    # Se ejecuta siempre para comprobar si alguno de los jobs de build tuvo éxito
     if: success() || failure()
     runs-on: ubuntu-latest
     steps:
@@ -113,31 +113,30 @@ jobs:
           repository: Ml-For-Academic-Data/egi-infrastructure-k8s
           token: ${{ secrets.REPO_ACCESS_TOKEN }}
 
-      # Instalar yq para manipular YAML de forma segura
       - name: Setup yq
         uses: mikefarah/yq@v4.30.8
 
-      # Actualiza el tag de visualization SI su job se completó
+      # Actualiza el tag de 'visualization' solo si su build fue exitoso
       - name: Actualizar tag de imagen de Visualization
         if: needs.build-and-push-visualization.result == 'success'
         run: |
           IMAGE_TAG=$(echo "${{ needs.build-and-push-visualization.outputs.tag }}" | awk -F: '{print $2}')
-          echo "Actualizando 'visualization' a la etiqueta: ${IMAGE_TAG}"
-          yq e -i '.visualization.image.tag = "'${IMAGE_TAG}'"' charts/frontend/values-desarrollo.yaml
+          echo "Actualizando '.services.visualization.image.tag' a: ${IMAGE_TAG}"
+          yq e -i '.services.visualization.image.tag = "'${IMAGE_TAG}'"' charts/frontend/values-desarrollo.yaml
 
-      # Actualiza el tag de static-web SI su job se completó
+      # Actualiza el tag de 'staticWeb' solo si su build fue exitoso
       - name: Actualizar tag de imagen de Static Web
         if: needs.build-and-push-static-web.result == 'success'
         run: |
           IMAGE_TAG=$(echo "${{ needs.build-and-push-static-web.outputs.tag }}" | awk -F: '{print $2}')
-          echo "Actualizando 'staticWeb' a la etiqueta: ${IMAGE_TAG}"
-          yq e -i '.staticWeb.image.tag = "'${IMAGE_TAG}'"' charts/frontend/values-desarrollo.yaml
+          echo "Actualizando '.services.staticWeb.image.tag' a: ${IMAGE_TAG}"
+          yq e -i '.services.staticWeb.image.tag = "'${IMAGE_TAG}'"' charts/frontend/values-desarrollo.yaml
 
       - name: Hacer Commit y Push de los cambios
         run: |
           git config --global user.name 'GitHub Actions Bot'
           git config --global user.email 'github-actions-bot@github.com'
-          # El comando 'git diff' detectará si 'yq' modificó el archivo
+          # Solo hace commit si el archivo 'values-desarrollo.yaml' realmente cambió
           if ! git diff --quiet charts/frontend/values-desarrollo.yaml; then
             git add charts/frontend/values-desarrollo.yaml
             git commit -m "ci(frontend): Actualiza imagen a ${{ github.sha }}"
