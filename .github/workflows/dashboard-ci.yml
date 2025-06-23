@@ -11,7 +11,7 @@ on:
 env:
   REGISTRY: ghcr.io
   # Definimos nombres de imagen separados
-  VISUALIZATION_IMAGE_NAME: ${{ github.repository_owner }}/egi-visualization
+  VISUALIZATION_IMAGE_NAME: ${{ github.repository_owner }}/egi-dashboard
   STATIC_WEB_IMAGE_NAME: ${{ github.repository_owner }}/egi-static-web
 
 jobs:
@@ -93,7 +93,7 @@ jobs:
       - name: Construir y publicar la imagen de Static Web
         uses: docker/build-push-action@v5
         with:
-          context: ./static-web # Apunta a la carpeta del nuevo servicio
+          context: ../static-web # Apunta a la carpeta del nuevo servicio
           file: ./static-web/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
