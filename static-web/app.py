@@ -1,7 +1,7 @@
 from flask import Flask, render_template, redirect, jsonify
 import os
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='.')
 
 # Obtener URLs de variables de entorno o usar valores por defecto para desarrollo
 AIRFLOW_URL = os.getenv("AIRFLOW_URL", "http://localhost:8080")
