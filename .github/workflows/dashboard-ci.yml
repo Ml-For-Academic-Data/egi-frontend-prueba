@@ -115,7 +115,7 @@ jobs:
 
       - name: Setup yq
         uses: mikefarah/yq@v4.30.8
-
+   
       # Actualiza el tag de 'visualization' solo si su build fue exitoso
       - name: Actualizar tag de imagen de Visualization
         if: needs.build-and-push-visualization.result == 'success'
