@@ -93,7 +93,7 @@ jobs:
       - name: Construir y publicar la imagen de Static Web
         uses: docker/build-push-action@v5
         with:
-          context: ../static-web # Apunta a la carpeta del nuevo servicio
+          context: ./static-web # Apunta a la carpeta del nuevo servicio
           file: ./static-web/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
