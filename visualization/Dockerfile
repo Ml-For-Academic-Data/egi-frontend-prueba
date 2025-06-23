@@ -21,4 +21,4 @@ EXPOSE 5000
 # 7. El comando para iniciar la aplicación. Esta es la línea corregida.
 # Le dice al contenedor que ejecute el servidor de 'panel' para el archivo 'app.py',
 # aceptando conexiones desde cualquier dirección en el puerto 5000.
-CMD panel serve app.py --address 0.0.0.0 --port 5000
+CMD panel serve app.py --address 0.0.0.0 --port 5000 --allow-websocket-origin=*
