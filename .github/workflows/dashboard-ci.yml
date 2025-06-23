@@ -12,12 +12,20 @@ env:
   REGISTRY: ghcr.io
   # Definimos nombres de imagen separados
   VISUALIZATION_IMAGE_NAME: ${{ github.repository_owner }}/egi-visualization
-  TEMPLATES_IMAGE_NAME: ${{ github.repository_owner }}/egi-templates
+  STATIC_WEB_IMAGE_NAME: ${{ github.repository_owner }}/egi-static-web
 
 jobs:
+  test:
+    name: Pruebas y Calidad de Código
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # ... (Pasos de instalación de Python y dependencias) ...
+
   # Job para construir y publicar la imagen de VISUALIZATION
   build-and-push-visualization:
     name: Construir y Publicar Imagen de Visualization
+    needs: test
     # Este job solo se ejecuta si hay cambios en la carpeta 'visualization'
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
@@ -52,10 +60,11 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
 
-  # Job para construir y publicar la imagen del NUEVO SERVICIO (templates)
-  build-and-push-templates:
-    name: Construir y Publicar Imagen de Templates
-    # Este job solo se ejecuta si hay cambios en la carpeta 'templates'
+  # Job para construir y publicar la imagen del NUEVO SERVICIO (Static Web)
+  build-and-push-static-web:
+    name: Construir y Publicar Imagen de Static Web
+    needs: test
+    # Este job solo se ejecuta si hay cambios en la carpeta 'Static Web'
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
@@ -78,14 +87,14 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.TEMPLATES_IMAGE_NAME }}
+          images: ${{ env.REGISTRY }}/${{ env.STATIC_WEB_IMAGE_NAME }}
           tags: type=sha,prefix=,format=short
 
-      - name: Construir y publicar la imagen de Auth Service
+      - name: Construir y publicar la imagen de Static Web
         uses: docker/build-push-action@v5
         with:
-          context: ./templates # Apunta a la carpeta del nuevo servicio
-          file: ./templates/Dockerfile
+          context: ./static-web # Apunta a la carpeta del nuevo servicio
+          file: ./static-web/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
 
@@ -93,7 +102,7 @@ jobs:
   update-manifest:
     name: Actualizar Manifiesto en K8s Repo
     # Se ejecuta si CUALQUIERA de los jobs de construcción fue exitoso
-    needs: [build-and-push-visualization, build-and-push-templates]
+    needs: [build-and-push-visualization, build-and-push-static-web]
     # 'always()' asegura que se ejecute para verificar si necesita hacer algo
     if: success() || failure()
     runs-on: ubuntu-latest
@@ -116,13 +125,13 @@ jobs:
           echo "Actualizando 'visualization' a la etiqueta: ${IMAGE_TAG}"
           yq e -i '.visualization.image.tag = "'${IMAGE_TAG}'"' charts/frontend/values-desarrollo.yaml
 
-      # Actualiza el tag de templates SI su job se completó
-      - name: Actualizar tag de imagen de Templates
-        if: needs.build-and-push-templates.result == 'success'
+      # Actualiza el tag de static-web SI su job se completó
+      - name: Actualizar tag de imagen de Static Web
+        if: needs.build-and-push-static-web.result == 'success'
         run: |
-          IMAGE_TAG=$(echo "${{ needs.build-and-push-templates.outputs.tag }}" | awk -F: '{print $2}')
-          echo "Actualizando 'authService' a la etiqueta: ${IMAGE_TAG}"
-          yq e -i '.authService.image.tag = "'${IMAGE_TAG}'"' charts/frontend/values-desarrollo.yaml
+          IMAGE_TAG=$(echo "${{ needs.build-and-push-static-web.outputs.tag }}" | awk -F: '{print $2}')
+          echo "Actualizando 'staticWeb' a la etiqueta: ${IMAGE_TAG}"
+          yq e -i '.staticWeb.image.tag = "'${IMAGE_TAG}'"' charts/frontend/values-desarrollo.yaml
 
       - name: Hacer Commit y Push de los cambios
         run: |
