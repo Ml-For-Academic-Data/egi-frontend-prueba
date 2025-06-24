@@ -40,10 +40,11 @@ jobs:
       - name: Ejecutar Linter (flake8) para revisar la calidad del código
         run: flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
 
-      # --- CORRECCIÓN ---
-      # Se añade el argumento '--no-tests-found-exit-code=0' para que el pipeline no falle si no hay tests.
+      # --- CORRECCIÓN FINAL ---
+      # Este comando ejecuta pytest y, si falla con el código 5 (no tests found),
+      # trata el paso como un éxito. Para cualquier otro error, el pipeline fallará.
       - name: Ejecutar Unit Tests (pytest)
-        run: pytest --no-tests-found-exit-code=0 # Permite que el pipeline continúe si no se encuentran tests
+        run: pytest || if [ $? -eq 5 ]; then exit 0; else exit $?; fi
 
   # --- 2. JOB PARA DETECTAR CAMBIOS ---
   # Este job revisa qué carpetas han cambiado para ejecutar los builds de forma condicional.
