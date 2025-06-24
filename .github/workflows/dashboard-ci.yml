@@ -130,7 +130,7 @@ jobs:
         run: |
           IMAGE_TAG=$(echo "${{ needs.build-and-push-static-web.outputs.tag }}" | awk -F: '{print $2}')
           echo "Actualizando '.services.staticWeb.image.tag' a: ${IMAGE_TAG}"
-          yq e -i '.services.staticWeb.image.tag = "'${IMAGE_TAG}'"' charts/frontend/values-desarrollo.yaml
+          yq e -i '.services.staticWeb.image.tag = "'${IMAGE_TAG}'"' charts/frontend-static/values-desarrollo.yaml
 
       - name: Hacer Commit y Push de los cambios
         run: |
@@ -139,6 +139,7 @@ jobs:
           # Solo hace commit si el archivo 'values-desarrollo.yaml' realmente cambió
           if ! git diff --quiet charts/frontend/values-desarrollo.yaml; then
             git add charts/frontend/values-desarrollo.yaml
+            git add charts/frontend-static/values-desarrollo.yaml
             git commit -m "ci(frontend): Actualiza imagen a ${{ github.sha }}"
             git push
           else
