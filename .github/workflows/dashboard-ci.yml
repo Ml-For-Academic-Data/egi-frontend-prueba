@@ -40,7 +40,6 @@ jobs:
       - name: Ejecutar Linter (flake8) para revisar la calidad del código
         run: flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
 
-      # --- CORRECCIÓN FINAL ---
       # Este comando ejecuta pytest y, si falla con el código 5 (no tests found),
       # trata el paso como un éxito. Para cualquier otro error, el pipeline fallará.
       - name: Ejecutar Unit Tests (pytest)
