@@ -11,9 +11,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  # El nombre de la imagen para la carpeta 'visualization'
   VISUALIZATION_IMAGE_NAME: ${{ github.repository_owner }}/egi-dashboard
-  # El nombre de la imagen para la carpeta 'static-web'
   STATIC_WEB_IMAGE_NAME: ${{ github.repository_owner }}/egi-static-web
 
 jobs:
@@ -24,21 +22,17 @@ jobs:
     steps:
       - name: Checkout del código
         uses: actions/checkout@v4
-
       - name: Configurar Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.9'
-
       - name: Instalar dependencias
         run: |
           pip install --no-cache-dir -r visualization/requirements.txt
           pip install --no-cache-dir -r static-web/requirements.txt
           pip install flake8 pytest
-
       - name: Ejecutar Linter (flake8)
         run: flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-
       - name: Ejecutar Unit Tests (pytest)
         run: pytest || if [ $? -eq 5 ]; then exit 0; else exit $?; fi
 
@@ -72,8 +66,7 @@ jobs:
     outputs:
       tag: ${{ steps.meta.outputs.tags }}
     steps:
-      - name: Checkout del código
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
       - name: Iniciar sesión en GHCR
         uses: docker/login-action@v3
         with:
@@ -127,7 +120,7 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
 
-  # --- 4. JOB PARA ACTUALIZAR MANIFIESTOS (VERSIÓN CORREGIDA Y ROBUSTA) ---
+  # --- 4. JOB PARA ACTUALIZAR MANIFIESTOS (VERSIÓN HÍBRIDA FINAL) ---
   update-manifest:
     name: Actualizar Manifiesto en Repo de Infraestructura
     needs: [build-and-push-visualization, build-and-push-static-web]
@@ -140,27 +133,24 @@ jobs:
           repository: Ml-For-Academic-Data/egi-infrastructure-k8s
           token: ${{ secrets.REPO_ACCESS_TOKEN }} 
 
-      # --- CORRECCIÓN: Se usa 'echo' en lugar de 'cat <<EOF' para evitar errores de formato ---
+      - name: Setup yq (herramienta para editar YAML)
+        uses: mikefarah/yq@v4.30.8
+
+      # --- CORRECCIÓN: Usamos 'yq' para editar el tag de visualization ---
+      # Esto preserva la estructura y los comentarios del archivo original.
       - name: Actualizar tag de imagen de Visualization
         if: needs.build-and-push-visualization.result == 'success'
         run: |
           IMAGE_TAG=$(echo "${{ needs.build-and-push-visualization.outputs.tag }}" | awk -F: '{print $2}')
-          echo "Creando values-desarrollo.yaml para visualization con tag: ${IMAGE_TAG}"
-          # Construimos el contenido en una variable y luego lo escribimos en el archivo
-          FILE_CONTENT="# Este archivo es generado automáticamente por el pipeline de CI/CD.
-          services:
-            visualization:
-              image:
-                tag: \"${IMAGE_TAG}\""
-          echo "$FILE_CONTENT" > charts/frontend/values-desarrollo.yaml
+          echo "Actualizando '.services.visualization.image.tag' a: ${IMAGE_TAG}"
+          yq e -i '.services.visualization.image.tag = "'${IMAGE_TAG}'"' charts/frontend/values-desarrollo.yaml
 
-      # --- CORRECCIÓN: Se usa 'echo' en lugar de 'cat <<EOF' para evitar errores de formato ---
+      # --- Mantenemos 'echo' para recrear el de static-web, ya que es simple y robusto ---
       - name: Actualizar tag de imagen de Static Web
         if: needs.build-and-push-static-web.result == 'success'
         run: |
           IMAGE_TAG=$(echo "${{ needs.build-and-push-static-web.outputs.tag }}" | awk -F: '{print $2}')
           echo "Creando values-desarrollo.yaml para static-web con tag: ${IMAGE_TAG}"
-          # Construimos el contenido en una variable y luego lo escribimos en el archivo
           FILE_CONTENT="# Este archivo es generado automáticamente por el pipeline de CI/CD.
           services:
             static-web:
@@ -172,9 +162,7 @@ jobs:
         run: |
           git config --global user.name 'GitHub Actions Bot'
           git config --global user.email 'github-actions-bot@github.com'
-          # Revisa si hay cualquier cambio en el repo para hacer commit
           if ! git diff --quiet HEAD; then
-            # 'git add .' añade todos los archivos nuevos o modificados
             git add .
             git commit -m "ci(frontend): Actualiza tag(s) de imagen a ${{ github.sha }}"
             git push
