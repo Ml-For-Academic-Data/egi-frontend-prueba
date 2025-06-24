@@ -140,34 +140,33 @@ jobs:
           repository: Ml-For-Academic-Data/egi-infrastructure-k8s
           token: ${{ secrets.REPO_ACCESS_TOKEN }} 
 
+      # --- CORRECCIÓN: Se usa 'echo' en lugar de 'cat <<EOF' para evitar errores de formato ---
       - name: Actualizar tag de imagen de Visualization
         if: needs.build-and-push-visualization.result == 'success'
         run: |
-          # Extrae solo el hash del tag, ej: 'ghcr.io/owner/img:1a2b3c4' -> '1a2b3c4'
           IMAGE_TAG=$(echo "${{ needs.build-and-push-visualization.outputs.tag }}" | awk -F: '{print $2}')
           echo "Creando values-desarrollo.yaml para visualization con tag: ${IMAGE_TAG}"
-          # Re-crea el archivo desde cero para asegurar un formato limpio
-          cat <<EOF > charts/frontend/values-desarrollo.yaml
-# Este archivo es generado automáticamente por el pipeline de CI/CD.
-services:
-  visualization:
-    image:
-      tag: "${IMAGE_TAG}"
-EOF
+          # Construimos el contenido en una variable y luego lo escribimos en el archivo
+          FILE_CONTENT="# Este archivo es generado automáticamente por el pipeline de CI/CD.
+          services:
+            visualization:
+              image:
+                tag: \"${IMAGE_TAG}\""
+          echo "$FILE_CONTENT" > charts/frontend/values-desarrollo.yaml
 
+      # --- CORRECCIÓN: Se usa 'echo' en lugar de 'cat <<EOF' para evitar errores de formato ---
       - name: Actualizar tag de imagen de Static Web
         if: needs.build-and-push-static-web.result == 'success'
         run: |
           IMAGE_TAG=$(echo "${{ needs.build-and-push-static-web.outputs.tag }}" | awk -F: '{print $2}')
           echo "Creando values-desarrollo.yaml para static-web con tag: ${IMAGE_TAG}"
-          # Re-crea el archivo desde cero para asegurar un formato limpio
-          cat <<EOF > charts/frontend-static/values-desarrollo.yaml
-# Este archivo es generado automáticamente por el pipeline de CI/CD.
-services:
-  static-web:
-    image:
-      tag: "${IMAGE_TAG}"
-EOF
+          # Construimos el contenido en una variable y luego lo escribimos en el archivo
+          FILE_CONTENT="# Este archivo es generado automáticamente por el pipeline de CI/CD.
+          services:
+            static-web:
+              image:
+                tag: \"${IMAGE_TAG}\""
+          echo "$FILE_CONTENT" > charts/frontend-static/values-desarrollo.yaml
 
       - name: Hacer Commit y Push de los cambios
         run: |
